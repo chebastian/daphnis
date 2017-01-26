@@ -1,0 +1,55 @@
+﻿<Window x:Class="BorderlessAlphaWin.SnippWindow"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:BorderlessAlphaWin"
+             WindowStyle="None"
+             Closing="root_Closing"
+             AllowsTransparency="True"
+             mc:Ignorable="d" 
+             Name="root"
+             Top="200" Left="600"
+            MouseDown="StartDrag"
+            Opacity="{Binding Opacity, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+            MouseEnter="root_MouseEnter"
+            MouseLeave="root_MouseLeave"
+            MouseMove="UpdateDrag"
+            MouseUp="EndDrag" 
+            SizeToContent="Height"
+            MouseDoubleClick="root_MouseDoubleClick"
+             Deactivated="root_Deactivated"
+             MouseWheel="root_MouseWheel"
+             d:DesignHeight="300" d:DesignWidth="300">
+    <Window.Resources>
+        <local:BoolToVisibleConverter x:Key="boolToVisible"> 
+        </local:BoolToVisibleConverter>
+    </Window.Resources>
+    <StackPanel Background="Black" Name="winRoot">
+        <StackPanel Name="winHeader" Visibility="{Binding IsVisible, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVisible}}">
+            <Button Content="Close" Command="{Binding CloseCommand,UpdateSourceTrigger=PropertyChanged}"/>
+            <ListBox Height="25" ItemsSource="{Binding Path=Tags,UpdateSourceTrigger=PropertyChanged,Mode=TwoWay}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"></StackPanel>
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding tName,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBox Name="tagName" Text="{Binding TagName,UpdateSourceTrigger=PropertyChanged,Mode=TwoWay}">
+                <TextBox.InputBindings>
+                    <KeyBinding Command="{Binding AddCommand, UpdateSourceTrigger=PropertyChanged}" Key="Return"/>
+                </TextBox.InputBindings>
+            </TextBox>
+        </StackPanel>
+        <StackPanel
+            VerticalAlignment="Stretch"
+            HorizontalAlignment="Stretch">
+            <Image Stretch="Fill" Name="imgSrc"/> 
+        </StackPanel>
+    </StackPanel>
+</Window>
