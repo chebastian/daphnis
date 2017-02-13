@@ -3,7 +3,9 @@ using MVVMHeplers;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
 
 namespace BorderlessAlphaWin
 {
@@ -18,12 +20,25 @@ namespace BorderlessAlphaWin
             IsUnsaved = true;
         } 
 
+        public bool MouseHover
+        {
+            get
+            {
+                return false;
+            }
+        }
+ 
         public ICommand CloseCommand
         {
             get
             {
                 return new MyCommandWrapper((x) => { _closeHandler.Close(); });
             }
+        }
+
+        public int UniqueIdentifier
+        {
+            get; set;
         }
 
         public Double ImgWidth
@@ -44,6 +59,33 @@ namespace BorderlessAlphaWin
         public String Image64
         {
             get; set;
+        }
+
+
+        public int PosLeft
+        {
+            get
+            {
+                return _posLeft;
+            }
+            set
+            {
+                _posLeft = value;
+                SetPropertyChanged();
+            }
+        }
+
+        public int PosTop
+        {
+            get
+            {
+                return _posTop;
+            }
+            set
+            {
+                _posTop = value;
+                SetPropertyChanged();
+            }
         }
 
         public ICommand AddCommand
@@ -80,6 +122,9 @@ namespace BorderlessAlphaWin
         private ICloseHandler _closeHandler;
         private string _tagName;
         private ObservableCollection<Tag> _tags;
+        private string _img64;
+        private int _posLeft;
+        private int _posTop;
 
         public float TargetOpacity
         {
@@ -130,6 +175,7 @@ namespace BorderlessAlphaWin
         }
 
         public bool IsUnsaved { get; set; }
+        public BitmapImage BitmapImage { get; internal set; }
 
         public interface ICloseHandler 
         {

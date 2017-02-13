@@ -24,7 +24,37 @@ namespace BorderlessAlphaWin
         private Point startPoint;
         private Vector posDelta;
         private DraggableViewModel vm;
+        private ICloseListener _closeListener;
 
+        public SnippWindow()
+        {
+            InitializeComponent();
+            vm = new DraggableViewModel(this);
+            //if(DesignerProperties.GetIsInDesignMode(this))
+            if ((bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(DependencyObject)).DefaultValue)) 
+            {
+                vm.Tags.Add(new Tag() { tName = "TagTest" });
+            }
+            this.DataContext = vm;
+            this.ShowActivated = true;
+            this.WindowState = WindowState.Normal;
+            //_closeListener = listener; 
+        }
+
+        public SnippWindow(ICloseListener listener)
+        {
+            InitializeComponent();
+            vm = new DraggableViewModel(this);
+            //if(DesignerProperties.GetIsInDesignMode(this))
+            if ((bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(DependencyObject)).DefaultValue)) 
+            {
+                vm.Tags.Add(new Tag() { tName = "TagTest" });
+            }
+            this.DataContext = vm;
+            this.ShowActivated = true;
+            this.WindowState = WindowState.Normal;
+            _closeListener = listener;
+        }
         System.Windows.Media.Color BkgColor
         {
             get
@@ -33,26 +63,10 @@ namespace BorderlessAlphaWin
             }
         }
 
-        public SnippWindow()
-        {
-            InitializeComponent();
-            vm = new DraggableViewModel(this);
-            this.DataContext = vm;
-            this.ShowActivated = true;
-            this.WindowState = WindowState.Normal;
-        }
-
         private void StartDrag(object sender, MouseButtonEventArgs e)
         { 
             startPoint = e.GetPosition(root);
             this.DragMove();
-            //rect = new System.Windows.Shapes.Rectangle();
-            //rect.Stroke = Brushes.Black;
-            //rect.StrokeThickness = 2;
-
-            //Canvas.SetLeft(rect, startPoint.X);
-            //Canvas.SetTop(rect, startPoint.Y);
-            //ctxCanvas.Children.Add(rect); 
         }
 
         private void UpdateDrag(object sender, MouseEventArgs e)
@@ -115,6 +129,12 @@ namespace BorderlessAlphaWin
         private void root_Closing(object sender, CancelEventArgs e)
         {
             Console.WriteLine();
+            _closeListener.onSnippCLosed(this);
         }
+
+        public interface ICloseListener
+        {
+            void onSnippCLosed(SnippWindow win);
+        } 
     }
 }

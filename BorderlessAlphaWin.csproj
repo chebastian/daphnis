@@ -63,6 +63,7 @@
     </ApplicationDefinition>
     <Compile Include="SnippWriter.cs" />
     <Compile Include="Tag.cs" />
+    <Compile Include="TagList.cs" />
     <Page Include="DraggableImage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

@@ -9,7 +9,8 @@
              AllowsTransparency="True"
              mc:Ignorable="d" 
              Name="root"
-             Top="200" Left="600"
+             Left="{Binding PosLeft, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+             Top="{Binding PosTop, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
             MouseDown="StartDrag"
             Opacity="{Binding Opacity, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
             MouseEnter="root_MouseEnter"
@@ -24,6 +25,39 @@
     <Window.Resources>
         <local:BoolToVisibleConverter x:Key="boolToVisible"> 
         </local:BoolToVisibleConverter>
+        <Style x:Key="TagClose" TargetType="{x:Type Button}">
+            <Setter Property="Background" Value="Black"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Grid>
+                            <Canvas Background="LightGray">
+                                <Ellipse
+                                  Canvas.Top="0"
+                                  Canvas.Left="0"
+                                  Fill="Red"
+                                  Height="10"
+                                  Width="10"
+                                  StrokeThickness="1"
+                                  Stroke="Red"/>
+                                <Line
+                                  X1="0" X2="10"
+                                  Y1="0" Y2="10"
+                                  Fill="#AAAAAA" 
+                                  StrokeThickness="1"
+                                  Stroke="White"/> 
+                                <Line
+                                  X2="0" X1="10"
+                                  Y1="0" Y2="10"
+                                  Fill="#AAAAAA" 
+                                  StrokeThickness="1"
+                                  Stroke="White"/> 
+                            </Canvas>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
     <StackPanel Background="Black" Name="winRoot">
         <StackPanel Name="winHeader" Visibility="{Binding IsVisible, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVisible}}">
@@ -36,7 +70,10 @@
                 </ListBox.ItemsPanel>
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <TextBlock Text="{Binding tName,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+                        <StackPanel Orientation="Horizontal"> 
+                            <TextBlock Text="{Binding tName,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+                            <Button Content="x" Style="{StaticResource TagClose}" Margin="5" Visibility="{Binding MouseHover, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolToVisible}}"/>
+                        </StackPanel>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>

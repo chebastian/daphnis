@@ -18,58 +18,90 @@ using System.ComponentModel;
 using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Collections.ObjectModel;
 
 namespace BorderlessAlphaWin
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyChanged
+    public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyChanged, SnippWindow.ICloseListener
     {
         public MainWindow()
         {
             InitializeComponent();
             this.DataContext = this;
             _windows = new List<Window>();
+            _searchResult = new List<Window>();
 
-            if(File.Exists("./save.json"))
+            if(File.Exists(SnippWriter.HistoryFile))
             {
-                var text = File.ReadAllText("./save.json");
+                var text = File.ReadAllText(SnippWriter.HistoryFile);
                 var jobj = JArray.Parse(text);
 
                 foreach(var item in jobj)
                 {
-                    var win = new SnippWindow();
-                    var w  = Double.Parse( item["ImgWidth"].ToString());
-                    var h  = Double.Parse( item["ImgHeight"].ToString());
-                    var b64  = item["Image64"].ToString();
-                    var bytes = Convert.FromBase64String(b64);
-                    System.Drawing.Bitmap bmp;
-                    BitmapImage img = new BitmapImage();
-                    using(var stream = new MemoryStream(bytes))
-                    {
-                        img.BeginInit();
-                        img.CacheOption = BitmapCacheOption.OnLoad;
-                        img.StreamSource = stream; 
-                        img.EndInit();
-                    }
-
-                    (win.DataContext as DraggableViewModel).IsUnsaved = false;
-                    win.imgSrc.Source = img;
-                    win.Width = w;
-                    win.Height = h;
+                    SnippWindow win = createWindowFromJSON(item);
                     win.Show();
-                    win.Focus(); 
+                    win.Focus();
+                    _windows.Add(win);
                     Console.WriteLine();
                 }
             }
         }
 
-        //private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        //{
-        //    Hide();
-        //    e.Cancel = true;
-        //}
+        private List<SnippWindow> GetWindowsWithTag(String tag)
+        {
+            var res = new List<SnippWindow>();
+
+            if (File.Exists(SnippWriter.RepoFile))
+            {
+                var text = File.ReadAllText(SnippWriter.RepoFile);
+                var jobj = JArray.Parse(text);
+                foreach (var win in jobj)
+                {
+                    var Tags = JsonConvert.DeserializeObject<ObservableCollection<Tag>>(win["Tags"].ToString());
+                    var matchingTags = Tags.Where(x => x.tName.ToLower().Contains(tag.ToLower()));
+                    if (matchingTags.Any())
+                    {
+                        res.Add(createWindowFromJSON(win));
+                    }
+                }
+            }
+
+            return res;
+        }
+
+        private SnippWindow createWindowFromJSON(JToken item)
+        {
+            var win = new SnippWindow(this);
+            var b64 = item["Image64"].ToString();
+            var bytes = Convert.FromBase64String(b64);
+            var vm = (win.DataContext as DraggableViewModel);
+
+            System.Drawing.Bitmap bmp;
+            BitmapImage img = new BitmapImage();
+            using (var stream = new MemoryStream(bytes))
+            {
+                img.BeginInit();
+                img.CacheOption = BitmapCacheOption.OnLoad;
+                img.StreamSource = stream;
+                img.EndInit();
+            }
+
+            vm.IsUnsaved =      false;
+            vm.Opacity =        float.Parse(item["Opacity"].ToString());
+            vm.ImageSource =    item["ImageSource"].ToString();
+            vm.PosTop =         Int32.Parse(item["PosTop"].ToString());
+            vm.Image64 =        b64;
+            vm.PosLeft =        Int32.Parse(item["PosLeft"].ToString());
+            vm.Tags =           JsonConvert.DeserializeObject<ObservableCollection<Tag>>(item["Tags"].ToString());
+            win.imgSrc.Source = img;
+            win.Width =         img.Width;
+            win.Height =        img.Height;
+            vm.UniqueIdentifier = b64.GetHashCode();
+            return win;
+        }
 
         [DllImport("User32.dll")]
         private static extern bool RegisterHotKey(
@@ -94,6 +126,9 @@ namespace BorderlessAlphaWin
         private BitmapImage _imgSrc;
         private int _counter;
         private List<Window> _windows;
+        private List<Window> _searchResult;
+        private string _searchText;
+        private bool _searching;
 
         public event PropertyChangedEventHandler PropertyChanged;
         public void SetPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] String name = null)
@@ -105,13 +140,60 @@ namespace BorderlessAlphaWin
             }
         }
 
+        public bool IsSearching
+        {
+            get
+                //do this shit
+            {
+                return _searching;
+            }
+            set
+            {
+                _searching = value;
+                SetPropertyChanged();
+            }
+        }
+
+        public String SearchField
+        {
+            get
+            {
+                return _searchText;
+            }
+            set
+            {
+                _searchText = value;
+                if (!String.IsNullOrWhiteSpace(value))
+                {
+                    foreach (var win in _searchResult)
+                    {
+                        win.Close();
+                        _windows.Remove(win);
+                    }
+
+                    var wins = GetWindowsWithTag(value);
+                    foreach (var win in wins)
+                    {
+                        win.Show();
+                        _searchResult.Add(win);
+                    }
+
+                    TagSearch.Focus();
+                    _windows.AddRange(wins);
+                }
+                else
+                {
+                    foreach (var win in _searchResult)
+                        win.Close();
+                }
+                SetPropertyChanged();
+            }
+        }
+
         public System.Drawing.Size RectSize {
             get
             {
-                var p = System.Drawing.Size.Empty;
-
-                //p.Width = (int)(Canvas.GetRight(rect) - Canvas.GetLeft(rect));
-                //p.Height = (int)(Canvas.GetBottom(rect) - Canvas.GetTop(rect));
+                var p = System.Drawing.Size.Empty; 
 
                 p.Width = (int)rect.Width;
                 p.Height = (int)rect.Height;
@@ -119,6 +201,7 @@ namespace BorderlessAlphaWin
                 return p;
             }
         }
+
         public System.Drawing.Point RectStart {
 
             get
@@ -188,6 +271,7 @@ namespace BorderlessAlphaWin
                 this.Activate();
                 this.WindowState = WindowState.Normal;
                 wasHotkeyed = true;
+                TagSearch.Focus();
             }
             else
                 this.WindowState = WindowState.Minimized;
@@ -242,19 +326,13 @@ namespace BorderlessAlphaWin
                 else
                     win.WindowState = WindowState.Minimized; 
             }
-
-            //if (this.WindowState.Equals(WindowState.Minimized))
-            //{
-            //    this.Activate();
-            //    this.WindowState = WindowState.Normal;
-            //    wasHotkeyed = true;
-            //}
-            //else
-            //    this.WindowState = WindowState.Minimized; 
         }
 
         private void Window_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
+            if (rect == null)
+                return;
+
             if(rect.Width * rect.Height > 4)
             {
                 //imgCapture.Source = null;
@@ -287,12 +365,15 @@ namespace BorderlessAlphaWin
                 ctxCanvas.Children.Remove(rect);
                 rect = null;
 
-                var win = new SnippWindow();
+                var win = new SnippWindow(this);
                 win.imgSrc.Source = img;
                 win.Width = img.Width;
                 win.Height = img.Height;
                 win.Show();
                 win.Focus();
+                ((DraggableViewModel)win.DataContext).BitmapImage = img;
+                ((DraggableViewModel)win.DataContext).Image64 = BitmapImageToBase64(img);
+                ((DraggableViewModel)win.DataContext).UniqueIdentifier = ((DraggableViewModel)win.DataContext).Image64.GetHashCode();
                 ((DraggableViewModel)win.DataContext).ImageSource = location;
                 ((DraggableViewModel)win.DataContext).ImgHeight = img.Height;
                 ((DraggableViewModel)win.DataContext).ImgWidth = img.Width;
@@ -303,6 +384,19 @@ namespace BorderlessAlphaWin
                 //CurrentImage = img;
             }
 
+        }
+
+        public String BitmapImageToBase64(BitmapImage img)
+        {
+            String b64 = String.Empty;
+            JpegBitmapEncoder encoder = new JpegBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(img));
+            using (var stream = new MemoryStream())
+            {
+                encoder.Save(stream);
+                b64 = Convert.ToBase64String(stream.ToArray());
+            }
+            return b64; 
         }
 
         public BitmapImage CurrentImage
@@ -374,9 +468,22 @@ namespace BorderlessAlphaWin
         }
 
         private void Quit_Click(object sender, RoutedEventArgs e)
-        { 
-            foreach (var win in _windows)
+        {
+            var res = MessageBox.Show("Save edited or created snippets?", "Save before quiting?", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if(res == MessageBoxResult.Yes)
             {
+                ToggleWindow();
+                SnippWriter.SaveAllSnippets(_windows.Select((x) => (x.DataContext as DraggableViewModel)).ToList());
+            }
+            foreach(var i in Enumerable.Range(0,_windows.Count))
+            {
+                var win = _windows[i];
+                win.Close();
+            }
+
+            foreach (var i in Enumerable.Range(0, _searchResult.Count))
+            {
+                var win = _searchResult[i];
                 win.Close();
             }
 
@@ -388,6 +495,11 @@ namespace BorderlessAlphaWin
             ToggleWindow();
             SnippWriter.SaveAllSnippets(_windows.Select((x) => (x.DataContext as DraggableViewModel)).ToList());
 
+        }
+
+        public void onSnippCLosed(SnippWindow win)
+        {
+            _windows.Remove(win);
         }
     }
 }

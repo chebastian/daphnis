@@ -13,12 +13,20 @@
         MouseLeftButtonDown="Window_MouseLeftButtonDown"
         MouseLeftButtonUp="Window_MouseLeftButtonUp"
         MouseMove="Window_MouseMove" 
-        Title="MyBorderlessWin" Height="350" Width="525">
+        Title="Daphnis" Height="350" Width="525">
     <Window.Background>
         <SolidColorBrush Opacity="0.2" Color="Black"/>
     </Window.Background> 
-    <Grid>
-        <Canvas HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Name="ctxCanvas"></Canvas>
+    <Window.Resources>
+        <local:BoolToVisibleConverter x:Key="boolToVisible"> 
+        </local:BoolToVisibleConverter>
+    </Window.Resources>
+    <Grid Margin="15">
+        <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center" Orientation="Horizontal">
+            <Label Content="Find With Tag:" Foreground="Green"/>
+            <TextBox Text="{Binding SearchField, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="200" VerticalAlignment="Top" HorizontalAlignment="Center" Name="TagSearch"/>
+        </StackPanel>
+        <Canvas Visibility="{Binding IsSearching, UpdateSourceTrigger=PropertyChanged,Converter={StaticResource ResourceKey=boolToVisible}}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Name="ctxCanvas"></Canvas>
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
             <TextBlock Text="Click and drag anywhere to create snippet" FontSize="24" TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Green"></TextBlock> 
             <TextBlock Text="Ctr+F10 to Hide/Show this window" FontSize="24" TextAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Green"></TextBlock> 

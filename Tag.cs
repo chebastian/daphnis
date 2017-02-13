@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -8,6 +9,7 @@ namespace BorderlessAlphaWin
     {
         private string _name;
 
+        [JsonProperty("tName")]
         public String tName
         {
             get
@@ -18,6 +20,14 @@ namespace BorderlessAlphaWin
             {
                 _name = value;
                 SetPropertyChanged();
+            }
+        }
+
+        public bool MouseHover
+        {
+            get
+            {
+                return false;
             }
         }
 
