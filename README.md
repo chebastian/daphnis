@@ -1,7 +1,8 @@
 # daphnis
 A tool for increasing productivity by letting you create and view snippets of your screen that floats above everything else. Easy to use and save snippets for viewing later by tagging. 
 
-## USAGE 
+Usage
+=====
 ## Creating a snippet
 * Given you hit the hotkey (Ctrl+F10)
 * And drag over what you want to save
